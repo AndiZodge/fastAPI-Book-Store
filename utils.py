@@ -11,15 +11,18 @@ async def validate_token(request: Request):
     authorization = request.headers.get("authorization")
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
+    # TODO: this can be avoided and why decoding outside try/catch
     try:
         _, token = authorization.split("Bearer ")
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid token format")
+    # TODO: why make other function for decode to call one line code
     parse_token = await decode_jwt(token)
 
     return parse_token
     
-    
+
+# TODO: timeout should be customizable from config
 def create_jwt(username, user_id, is_admin):
     payload = {
         "sub": user_id,
@@ -29,11 +32,12 @@ def create_jwt(username, user_id, is_admin):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
+
 async def decode_jwt(token: str):
     token = token.strip()
     try:
         return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
-    except jwt.ExpiredSignatureError as jes:
+    except jwt.ExpiredSignatureError as jes: # TODO: not using defined error variable
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as jit:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -42,7 +46,7 @@ async def check_admin_token(request):
     try:
         jwt_token = await validate_token(request)
         return jwt_token.get('is_admin', False)
-    except Exception as ex:
+    except Exception as ex: # CHECK: using base level exception
         return False
 
 

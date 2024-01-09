@@ -12,6 +12,10 @@ from utils import create_jwt, validate_token, get_logger
 
 log = get_logger(logger_name="admin router", module="admin router")
 
+### CHECK:
+'''
+Validation logic can be removed from each function call and put into a decorator 
+'''
 
 router = APIRouter()
 
@@ -34,6 +38,7 @@ async def get_books(id: int, db:db_dependency):
 @router.post('/get_books_by_genre', tags=['user'])
 async def get_books_by_genre(request:Request, db:db_dependency):
     try:
+        # CHECK: Token not in use and why token is required here?
         if not(token := await validate_token(request)):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401) 
         body = await request.body()
@@ -47,7 +52,11 @@ async def get_books_by_genre(request:Request, db:db_dependency):
     except Exception as exx:
         log.error(str(exx))
         return JSONResponse(content={'msg': str(exx)}, status_code=400)
-        
+
+## NOTE:
+'''
+    User related APIS should be grouped together and same for books
+'''
 @router.get('/my_books', tags=['user'])
 async def get_my_books(request: Request, db: db_dependency):
     try:
@@ -55,6 +64,7 @@ async def get_my_books(request: Request, db: db_dependency):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401) 
         user_id = token.get('sub')
         user_books_details = db.query(UserBook).filter(UserBook.user_id==user_id).all()
+        # GUESS: its always going to return list, so why checking the instance,
         if isinstance(user_books_details, list):
             for user_book in user_books_details:
                 book_id = user_book.book_id
@@ -89,6 +99,7 @@ async def buy_book( request:Request, db:db_dependency):
             for key, value in book_details.dict().items():
                 setattr(data, key, value)
             db.commit()
+        # CHECK: this should be a function call for separate function
         _book_details = db.query(Book).filter(Book.id==book_details.book_id).first()
         _book_details.quantity_available -= 1
         db.commit()
@@ -114,9 +125,10 @@ async def login(user:UserLoginBase, db: db_dependency, resp:Response):
             resp.status_code = status.HTTP_404_NOT_FOUND
             return HTTPException( detail="Invalid user name")
         if data.password == user.password:
+            # CHECK: instead of sending fields from data send data itself to create JWT
             return {'jwt': create_jwt(data.username, data.id, data.is_admin)}
         else:
-            resp.status_code = status.HTTP_404_NOT_FOUND
+            resp.status_code = status.HTTP_404_NOT_FOUND  # CHECK: status code should be 401
             return HTTPException( detail="Wrong password")
     except Exception as exx:
         log.error(str(exx))
