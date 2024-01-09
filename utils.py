@@ -8,41 +8,40 @@ import sys
 
 
 async def validate_token(request: Request):
-    authorization = request.headers.get("authorization")
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
-    # TODO: this can be avoided and why decoding outside try/catch
     try:
-        _, token = authorization.split("Bearer ")
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid token format")
-    # TODO: why make other function for decode to call one line code
-    parse_token = await decode_jwt(token)
+        authorization = request.headers.get("authorization")
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
 
-    return parse_token
+        _, token = authorization.split("Bearer ")
+        return await decode_jwt(token)
+
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail="Invalid token format") from e
+
     
 
 # TODO: timeout should be customizable from config
-def create_jwt(username, user_id, is_admin):
+def create_jwt(user_data: dict) -> str:
     payload = {
-        "sub": user_id,
-        "is_admin":is_admin,
-        "username": username,
+        "sub": user_data.user_id,
+        "is_admin": user_data.is_admin,
+        "username": user_data.username,
         "exp": datetime.utcnow() + timedelta(minutes=15)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 
-async def decode_jwt(token: str):
+async def decode_jwt(token: str) -> dict:
     token = token.strip()
     try:
         return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
-    except jwt.ExpiredSignatureError as jes: # TODO: not using defined error variable
-        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.ExpiredSignatureError as jes:
+        raise HTTPException(status_code=401, detail=str(jes))
     except jwt.InvalidTokenError as jit:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail=str(jit))
 
-async def check_admin_token(request):
+async def check_admin_token(request) -> bool:
     try:
         jwt_token = await validate_token(request)
         return jwt_token.get('is_admin', False)

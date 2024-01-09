@@ -14,7 +14,6 @@ router = APIRouter()
 @router.get('/user_list', tags=['admin'])
 async def get_user_list(db: db_dependency, request: Request):
     try:
-        # CHECK: no use of is_admin variable, not needed
         if not (is_admin :=await check_admin_token(request)):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401)  
         return db.query(User).all()
@@ -25,7 +24,6 @@ async def get_user_list(db: db_dependency, request: Request):
 @router.get('/user_book_list', tags=['admin'])
 async def get_all_user_book_list(db: db_dependency, request:Request):
     try:
-        # CHECK: same as above
         if not (is_admin :=await check_admin_token(request)):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401)  
         user_books_details =  db.query(UserBook).all()

@@ -38,7 +38,6 @@ async def get_books(id: int, db:db_dependency):
 @router.post('/get_books_by_genre', tags=['user'])
 async def get_books_by_genre(request:Request, db:db_dependency):
     try:
-        # CHECK: Token not in use and why token is required here?
         if not(token := await validate_token(request)):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401) 
         body = await request.body()
@@ -64,12 +63,11 @@ async def get_my_books(request: Request, db: db_dependency):
             return JSONResponse(content={'msg':'UNAUTHORIZED'}, status_code=401) 
         user_id = token.get('sub')
         user_books_details = db.query(UserBook).filter(UserBook.user_id==user_id).all()
-        # GUESS: its always going to return list, so why checking the instance,
-        if isinstance(user_books_details, list):
-            for user_book in user_books_details:
-                book_id = user_book.book_id
-                _book_details = db.query(Book).filter(Book.id == book_id).first()
-                user_book.book_name = _book_details.book_name
+        # if isinstance(user_books_details, list): #NO NEED TO CHECK I GUESS
+        for user_book in user_books_details:
+            book_id = user_book.book_id
+            _book_details = db.query(Book).filter(Book.id == book_id).first()
+            user_book.book_name = _book_details.book_name
         return user_books_details
     except Exception as exx:
         log.error(str(exx))
@@ -92,14 +90,12 @@ async def buy_book( request:Request, db:db_dependency):
         if not data:
             db_transaction = UserBook(**book_details.model_dump())
             db.add(db_transaction)
-            db.commit()
         else:
             book_details.quantity = data.quantity + 1
             book_details.total_cost += data.total_cost
             for key, value in book_details.dict().items():
                 setattr(data, key, value)
-            db.commit()
-        # CHECK: this should be a function call for separate function
+        db.commit()
         _book_details = db.query(Book).filter(Book.id==book_details.book_id).first()
         _book_details.quantity_available -= 1
         db.commit()
@@ -126,7 +122,7 @@ async def login(user:UserLoginBase, db: db_dependency, resp:Response):
             return HTTPException( detail="Invalid user name")
         if data.password == user.password:
             # CHECK: instead of sending fields from data send data itself to create JWT
-            return {'jwt': create_jwt(data.username, data.id, data.is_admin)}
+            return {'jwt': create_jwt(data)}
         else:
             resp.status_code = status.HTTP_404_NOT_FOUND  # CHECK: status code should be 401
             return HTTPException( detail="Wrong password")
