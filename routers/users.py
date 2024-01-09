@@ -4,7 +4,6 @@ from model import User, UserBook, Book
 from BaseModel.BookGenreBase import BookGenreBase
 from BaseModel.UserLoginBase import UserLoginBase
 from BaseModel.UserBase import UserBase
-from BaseModel.MyBooksBase import MyBooksBase
 from BaseModel.BuyBookBase import BuyBookBase
 from sqlalchemy import desc
 from fastapi.responses import JSONResponse
@@ -124,7 +123,7 @@ async def login(user:UserLoginBase, db: db_dependency, resp:Response):
             # CHECK: instead of sending fields from data send data itself to create JWT
             return {'jwt': create_jwt(data)}
         else:
-            resp.status_code = status.HTTP_404_NOT_FOUND  # CHECK: status code should be 401
+            resp.status_code = 401  
             return HTTPException( detail="Wrong password")
     except Exception as exx:
         log.error(str(exx))
