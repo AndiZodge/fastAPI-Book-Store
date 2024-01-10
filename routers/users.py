@@ -9,7 +9,7 @@ from sqlalchemy import desc
 from fastapi.responses import JSONResponse
 from utils import create_jwt, validate_token, get_logger
 
-log = get_logger(logger_name="admin router", module="admin router")
+log = get_logger(logger_name="user router", module="user router")
 
 ### CHECK:
 '''
@@ -118,13 +118,12 @@ async def login(user:UserLoginBase, db: db_dependency, resp:Response):
         data = db.query(User).filter(User.username == user.username).first()
         if not data:
             resp.status_code = status.HTTP_404_NOT_FOUND
-            return HTTPException( detail="Invalid user name")
+            return HTTPException(detail="Invalid user name")
         if data.password == user.password:
-            # CHECK: instead of sending fields from data send data itself to create JWT
             return {'jwt': create_jwt(data)}
         else:
             resp.status_code = 401  
-            return HTTPException( detail="Wrong password")
+            return HTTPException(detail="Wrong password")
     except Exception as exx:
         log.error(str(exx))
         return JSONResponse(content={'msg': str(exx)}, status_code=400)

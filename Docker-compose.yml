@@ -15,7 +15,7 @@ services:
 
   fastapi:
     image: backend:latest
-    container_name: fastapi
+    container_name: fast_api
     ports:
       - "8080:8080"
     depends_on:
@@ -24,6 +24,18 @@ services:
       - my-network
     links:
       - "my_sql_db"
+
+  reactjs:
+    image: react-app:latest
+    container_name: react_js
+    ports:
+      - "3000:3000"
+    depends_on:
+      - fastapi
+    networks:
+      - my-network
+    links:
+      - "fastapi"
 
 networks:
   my-network:

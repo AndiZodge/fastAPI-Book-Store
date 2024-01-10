@@ -24,7 +24,7 @@ async def validate_token(request: Request):
 # TODO: timeout should be customizable from config
 def create_jwt(user_data: dict) -> str:
     payload = {
-        "sub": user_data.user_id,
+        "sub": user_data.id,
         "is_admin": user_data.is_admin,
         "username": user_data.username,
         "exp": datetime.utcnow() + timedelta(minutes=15)
