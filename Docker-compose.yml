@@ -4,7 +4,7 @@ services:
     image: mysql:latest
     container_name: DB
     ports:
-      - "3308:3306"
+      - "3307:3306"
     environment:
       MYSQL_USER: "user"
       MYSQL_DATABASE: 'book_store'
@@ -17,11 +17,13 @@ services:
     image: backend:latest
     container_name: fastapi
     ports:
-      - "8080:8000"
+      - "8080:8080"
     depends_on:
       - my_sql_db
     networks:
       - my-network
+    links:
+      - "my_sql_db"
 
 networks:
   my-network:

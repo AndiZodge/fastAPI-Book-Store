@@ -19,7 +19,7 @@ app.add_middleware(
 app.include_router(admin.router)
 app.include_router(users.router)        
 
-# model.Base.metadata.create_all(bind=engine)
+model.Base.metadata.create_all(bind=engine)
 
 @app.get('/')
 async def home():
